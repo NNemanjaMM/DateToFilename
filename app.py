@@ -4,7 +4,7 @@ import PIL.Image        #pip install image
 from subprocess import check_output
                         #download efix tool from https://exiftool.org/
 
-DIRECTORY = 'd:\\Users\\Nemanja_sprinting\\Desktop\\Niki-video'
+DIRECTORY = '(path to file)'
 TIME_PRINT_FORMAT = '%Y%m%d_%H%M%S'
 #TIME_PRINT_FORMAT = '%Y-%m-%d %H:%M:%S'
 TIME_CAPTURE_FORMAT = '%Y:%m:%d %H:%M:%S'
@@ -121,9 +121,6 @@ for file_name in files_list:
 
     #renaming_dictionary[file] = final_name
     renaming_dictionary[file] = DIRECTORY + '\\' + final_name
-
-    #if count > 50:
-    #    break
 
 print()
 
