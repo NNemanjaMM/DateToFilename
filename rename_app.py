@@ -4,13 +4,16 @@ import PIL.Image        #pip install image
 from subprocess import check_output
                         #download efix tool from https://exiftool.org/
 
-DIRECTORY = '(path to file)'
+DIRECTORY = '----'
+PATH_TO_EFIX_TOOL = '----'
+
 TIME_PRINT_FORMAT = '%Y%m%d_%H%M%S'
 #TIME_PRINT_FORMAT = '%Y-%m-%d %H:%M:%S'
 TIME_CAPTURE_FORMAT = '%Y:%m:%d %H:%M:%S'
-PATH_TO_EFIX_TOOL = 'exiftool\\exiftool.exe'
 VIDEO_EXTENSIONS = ['.mp4', '.mov']
-VIDEO_CREATION_TAG = 'Create Date'
+VIDEO_CREATION_TAG_1 = 'Create Date'
+VIDEO_CREATION_TAG_2 = 'Creation Date '
+VIDEO_CREATION_TAG_3 = 'File Modification Date/Time'
 NAME_PREFIX = 'IMG_'
 
 TAG_DATETIME = 306
@@ -49,24 +52,51 @@ def is_video_file(filename):
             return True
     return False
 
-# Returns 'Media creation date' metadata from video file in time format
+# Returns earliest 'Media creation date' metadata from video file in time format or File modification time (if earlier)
 def get_date_from_video_file(filename):
     try:
         metadata_list_raw = check_output([PATH_TO_EFIX_TOOL,filename])
         metadata_list_decoded = metadata_list_raw.decode("utf-8")
         metadata_list = metadata_list_decoded.splitlines()
     except:
-        return time.gmtime()
+        time_modification = time.localtime(os.path.getmtime(filename))
+        return time_modification
         
-    raw_creation_date_string = next((s for s in metadata_list if VIDEO_CREATION_TAG in s), None)
-    reduced_creation_date_string = ' '.join(raw_creation_date_string.split())
-    final_creation_date_string = reduced_creation_date_string.replace(VIDEO_CREATION_TAG + ' : ', '')
+    raw_creation_date_string_1 = next((s for s in metadata_list if VIDEO_CREATION_TAG_1 in s), None)
+    raw_creation_date_string_2 = next((s for s in metadata_list if VIDEO_CREATION_TAG_2 in s), None)
+    time_modification = time.localtime(os.path.getmtime(filename))
 
-    if final_creation_date_string == '0000:00:00 00:00:00':
-        return time.gmtime()
-    return time.strptime(final_creation_date_string, TIME_CAPTURE_FORMAT)
+    if raw_creation_date_string_1 is None and raw_creation_date_string_2 is None:
+        return time_modification
+    
+    creation_date_time_1 = time.gmtime()
+    creation_date_time_2 = time.gmtime()
+    final_creation_time = time.gmtime()
 
+    if raw_creation_date_string_1 is not None:
+        reduced_creation_date_string_1 = ' '.join(raw_creation_date_string_1.split())
+        final_creation_date_string_1 = reduced_creation_date_string_1.replace(VIDEO_CREATION_TAG_1 + ' : ', '')
 
+        if final_creation_date_string_1 != '0000:00:00 00:00:00':
+            creation_date_time_1 = time.strptime(final_creation_date_string_1, TIME_CAPTURE_FORMAT)
+
+    if raw_creation_date_string_2 is not None:
+        reduced_creation_date_string_2 = ' '.join(raw_creation_date_string_2.split())
+        processing_creation_date_string_2 = reduced_creation_date_string_2.replace(VIDEO_CREATION_TAG_2 + ': ', '')
+        final_creation_date_string_2 = processing_creation_date_string_2.split('+', 1)[0]
+
+        if final_creation_date_string_2 != '0000:00:00 00:00:00':
+            creation_date_time_2 = time.strptime(final_creation_date_string_2, TIME_CAPTURE_FORMAT)
+
+    if creation_date_time_1 < creation_date_time_2: #Checking which metadata time is earlier
+        final_creation_time = creation_date_time_1
+    else:
+        final_creation_time = creation_date_time_2
+
+    if time_modification < final_creation_time: #Checking earlier metadata with file modification time
+        final_creation_time = time_modification
+
+    return final_creation_time
 
 files_list = os.listdir(DIRECTORY)
 count = 0
@@ -80,10 +110,12 @@ for file_name in files_list:
 
     file = DIRECTORY+'\\'+file_name 
     
-    time_creation = time.gmtime(os.path.getctime(file))     # usually represents a time when file is copied, so it is useless
-    time_modification = time.gmtime(os.path.getmtime(file))
+    time_creation = time.localtime(os.path.getctime(file))     # usually represents a time when file is copied, so it is useless
+    time_modification = time.localtime(os.path.getmtime(file))
+    
+    time_now = time.localtime()
+    time_capture = time_now    # empty value, in case it is not obtained
 
-    time_capture = time.gmtime()    # empty value, in case it is not obtained
     if is_video_file(file_name):
         time_capture = get_date_from_video_file(file)
     else:
@@ -100,7 +132,7 @@ for file_name in files_list:
 
     final_time = ''
     time_precision = ''
-    if time_modification < time_capture:
+    if time_now == time_capture:
         final_time = time_modification
         time_precision = '_p2'
     else:

@@ -1,7 +1,7 @@
 import os
 import shutil
 
-directory = 'D:\\Users\\porodični\\Desktop\\tel niki'
+directory = '-----'
 
 
 def move_all_files_to_destination_dir(original_dir, destination_dir, count):
