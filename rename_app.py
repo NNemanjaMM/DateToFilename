@@ -1,11 +1,12 @@
 import os
 import time
+import datetime
 import PIL.Image        #pip install image
 from subprocess import check_output
                         #download efix tool from https://exiftool.org/
 
-DIRECTORY = '----'
-PATH_TO_EFIX_TOOL = '----'
+DIRECTORY = ''
+PATH_TO_EFIX_TOOL = ''
 
 TIME_PRINT_FORMAT = '%Y%m%d_%H%M%S'
 #TIME_PRINT_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -20,6 +21,10 @@ TAG_DATETIME = 306
 TAG_DATETIME_ORIGINAL = 36867    # only this is used
 TAG_DATETIME_DIGITIZED = 36868
 STATUS_LINE_LENGTH = 50
+
+ADJUST_TIME = False
+ADJUST_TIME_DAYS = 366
+ADJUST_TIME_HOURS = -3
 
 duplication_number = 0
 renaming_dictionary = {}
@@ -138,8 +143,14 @@ for file_name in files_list:
     else:
         final_time = time_capture
         time_precision = '_p1'
-
-    final_time_string = time.strftime(TIME_PRINT_FORMAT, final_time)
+     
+    if ADJUST_TIME:
+        time_adjust = datetime.datetime(*final_time[:6])
+        time_adjust = time_adjust + datetime.timedelta(days=ADJUST_TIME_DAYS)
+        time_adjust = time_adjust + datetime.timedelta(hours=ADJUST_TIME_HOURS)
+        final_time_string=time_adjust.strftime(TIME_PRINT_FORMAT)
+    else:
+        final_time_string = time.strftime(TIME_PRINT_FORMAT, final_time)
     
     proposed_name = NAME_PREFIX + final_time_string + time_precision
 
