@@ -1,7 +1,7 @@
 import os
 import shutil
 
-directory = '-----'
+directory = '***'
 
 
 def move_all_files_to_destination_dir(original_dir, destination_dir, count):

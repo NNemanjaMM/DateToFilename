@@ -5,8 +5,8 @@ import PIL.Image        #pip install image
 from subprocess import check_output
                         #download efix tool from https://exiftool.org/
 
-DIRECTORY = ''
-PATH_TO_EFIX_TOOL = ''
+DIRECTORY = '***'
+PATH_TO_EFIX_TOOL = '***'
 
 TIME_PRINT_FORMAT = '%Y%m%d_%H%M%S'
 #TIME_PRINT_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -29,6 +29,7 @@ ADJUST_TIME_HOURS = -3
 duplication_number = 0
 renaming_dictionary = {}
 not_renamed = {}
+errors_list = {}
 
 def print_status(message, current, total):
     print('  ' + message + '... |', end = '')
@@ -78,21 +79,24 @@ def get_date_from_video_file(filename):
     creation_date_time_2 = time.gmtime()
     final_creation_time = time.gmtime()
 
-    if raw_creation_date_string_1 is not None:
-        reduced_creation_date_string_1 = ' '.join(raw_creation_date_string_1.split())
-        final_creation_date_string_1 = reduced_creation_date_string_1.replace(VIDEO_CREATION_TAG_1 + ' : ', '')
+    try:
+        if raw_creation_date_string_1 is not None:
+            reduced_creation_date_string_1 = ' '.join(raw_creation_date_string_1.split())
+            final_creation_date_string_1 = reduced_creation_date_string_1.replace(VIDEO_CREATION_TAG_1 + ' : ', '')
 
-        if final_creation_date_string_1 != '0000:00:00 00:00:00':
-            creation_date_time_1 = time.strptime(final_creation_date_string_1, TIME_CAPTURE_FORMAT)
+            if final_creation_date_string_1 != '0000:00:00 00:00:00':
+                creation_date_time_1 = time.strptime(final_creation_date_string_1, TIME_CAPTURE_FORMAT)
 
-    if raw_creation_date_string_2 is not None:
-        reduced_creation_date_string_2 = ' '.join(raw_creation_date_string_2.split())
-        processing_creation_date_string_2 = reduced_creation_date_string_2.replace(VIDEO_CREATION_TAG_2 + ': ', '')
-        final_creation_date_string_2 = processing_creation_date_string_2.split('+', 1)[0]
+        if raw_creation_date_string_2 is not None:
+            reduced_creation_date_string_2 = ' '.join(raw_creation_date_string_2.split())
+            processing_creation_date_string_2 = reduced_creation_date_string_2.replace(VIDEO_CREATION_TAG_2 + ': ', '')
+            final_creation_date_string_2 = processing_creation_date_string_2.split('+', 1)[0]
 
-        if final_creation_date_string_2 != '0000:00:00 00:00:00':
-            creation_date_time_2 = time.strptime(final_creation_date_string_2, TIME_CAPTURE_FORMAT)
-
+            if final_creation_date_string_2 != '0000:00:00 00:00:00':
+                creation_date_time_2 = time.strptime(final_creation_date_string_2, TIME_CAPTURE_FORMAT)
+    except ValueError as e:
+        errors_list[filename] = e
+        
     if creation_date_time_1 < creation_date_time_2: #Checking which metadata time is earlier
         final_creation_time = creation_date_time_1
     else:
@@ -166,6 +170,14 @@ for file_name in files_list:
     renaming_dictionary[file] = DIRECTORY + '\\' + final_name
 
 print()
+
+if len(errors_list) > 0:
+    print('******************************************************')
+    for key in errors_list:    
+        print('File: ', key, '\nError: ', errors_list[key])
+        print()
+    print('******************************************************')
+    print('Error(s) found, still continue?')
 
 while True:
     user_input = input('You will rename ' + str(len(renaming_dictionary)) + ' files, continue? (y/n): ')
