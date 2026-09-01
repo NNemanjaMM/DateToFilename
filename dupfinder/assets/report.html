@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duplicate review - {{title}}</title>
+<style>
+:root { --thumb: 260px; color-scheme: light dark; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a; background: #f6f6f4; }
+code { font-family: ui-monospace, Consolas, Menlo, monospace; }
+button { font: inherit; cursor: pointer; }
+
+.toolbar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap;
+  gap: 10px 18px; align-items: center; padding: 10px 20px; background: #ffffffee;
+  backdrop-filter: blur(4px); border-bottom: 1px solid #0002; }
+.toolbar h1 { font-size: 15px; margin: 0; }
+.toolbar label { font-size: 12px; display: flex; gap: 6px; align-items: center; }
+.toolbar button, .toolbar select { font-size: 12px; padding: 3px 8px; }
+.toolbar .spacer { flex: 1; }
+.counter { font-size: 12px; color: #555; }
+.counter.warn { color: #d33; font-weight: 700; }
+
+.summary { padding: 14px 20px; color: #555; }
+.summary .hint { margin-top: 4px; }
+.summary .nav { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.summary .nav a { min-width: 24px; text-align: center; padding: 2px 6px; border: 1px solid #0003;
+  border-radius: 4px; text-decoration: none; color: inherit; }
+
+.group { padding: 22px 20px; border-top: 3px solid #0001; scroll-margin-top: 130px; }
+.group > h2 { margin: 0 0 12px; font-size: 16px; }
+.group > h2 span.count { color: #888; font-weight: normal; font-size: 13px; }
+.gactions { margin-left: 10px; font-weight: normal; }
+.gactions button { font-size: 11px; padding: 2px 8px; }
+.invalidnote { display: none; color: #d33; font-size: 12px; margin: 0 0 12px; }
+.group.invalid { outline: 2px solid #d33; outline-offset: 6px; }
+.group.invalid .invalidnote { display: block; }
+
+.cards { display: flex; gap: 14px; }
+.cards.row { flex-wrap: wrap; align-items: flex-start; }
+.cards.col { flex-direction: column; }
+
+.card { margin: 0; border: 1px solid #0002; border-left: 4px solid #0002; border-radius: 8px;
+  overflow: hidden; background: #fff; width: var(--thumb); }
+.cards.col .card { width: auto; max-width: 760px; display: flex; }
+.card.keep { box-shadow: 0 0 0 2px #2e7d3233; }
+.card.d-move { border-left-color: #ad6800; }
+.card.d-keep { border-left-color: #2e7d32; }
+.card a { display: block; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 / 20px 20px; }
+.card img { display: block; width: 100%; height: auto; }
+.cards.col .card img { width: var(--thumb); }
+.card .noimg { padding: 30px; text-align: center; color: #999; }
+.card figcaption { padding: 8px 10px; }
+
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px;
+  border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; color: #fff; }
+.badge.keep { background: #2e7d32; }
+.badge.dup { background: #ad6800; }
+.card .name { font-weight: 600; margin-top: 4px; word-break: break-all; }
+.card .path { font-family: ui-monospace, Consolas, Menlo, monospace; font-size: 11px;
+  color: #777; word-break: break-all; }
+
+.decide { display: inline-flex; margin-top: 6px; border: 1px solid #0003; border-radius: 6px; overflow: hidden; }
+.decide button { font-size: 11px; padding: 3px 12px; border: 0; background: transparent; color: inherit; }
+.decide button.on[data-set="keep"] { background: #2e7d32; color: #fff; }
+.decide button.on[data-set="move"] { background: #ad6800; color: #fff; }
+
+table.cmp { margin-top: 14px; border-collapse: collapse; width: 100%; font-size: 13px; }
+table.cmp th, table.cmp td { border: 1px solid #0002; padding: 5px 9px; text-align: left; vertical-align: top; }
+table.cmp thead th { background: #eee; }
+table.cmp tbody th { white-space: nowrap; color: #555; font-weight: 600; }
+table.cmp td.worse { background: #fdecea; }
+table.cmp td.better { background: #e7f5e9; }
+table.cmp td.mono { font-family: ui-monospace, Consolas, Menlo, monospace; font-size: 11px; word-break: break-all; }
+
+@media (prefers-color-scheme: dark) {
+  body { color: #e6e6e6; background: #1b1b1d; }
+  .toolbar { background: #26262aee; border-color: #fff2; }
+  .counter, .summary { color: #aaa; }
+  .summary .nav a { border-color: #fff3; }
+  .group { border-color: #fff2; }
+  .card { background: #242427; border-color: #fff2; }
+  table.cmp thead th { background: #333; }
+  table.cmp th, table.cmp td { border-color: #fff2; }
+  table.cmp tbody th { color: #bbb; }
+  table.cmp td.worse { background: #5a2a26; }
+  table.cmp td.better { background: #234b2c; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Duplicate review</h1>
+  <label>Layout
+    <select id="layout">
+      <option value="row">Side by side</option>
+      <option value="col">Stacked</option>
+    </select>
+  </label>
+  <label>Thumbnails
+    <span>
+      <button data-thumb="170">S</button>
+      <button data-thumb="260">M</button>
+      <button data-thumb="380">L</button>
+    </span>
+  </label>
+  <span class="spacer"></span>
+  <span id="counter" class="counter"></span>
+  <button id="download" type="button">Download decisions</button>
+  <button id="copy" type="button">Copy JSON</button>
+</div>
+
+<div class="summary">
+  <div>{{summary}}</div>
+  <div class="hint">Mark each file <b>Keep</b> or <b>Move</b>, then <b>Download decisions</b>,
+    drop the file next to the script, and run it again.</div>
+  <div class="nav">{{nav}}</div>
+</div>
+
+{{body}}
+
+<script>window.__REPORT__ = {{meta}};</script>
+<script>{{js}}</script>
+</body>
+</html>

@@ -11,9 +11,10 @@ def move_all_files_to_destination_dir(original_dir, destination_dir, count):
         for name in files:
             os.rename(root + os.sep + name, destination_dir + os.sep + str(count) + '-' + name)
             #shutil.move()
+            count += 1
             
 
-count = 0 
+count = 0
 subdirs = [f.path for f in os.scandir(directory) if f.is_dir()]   # [Folder1, Folder2]
 for d in subdirs:
     move_all_files_to_destination_dir(d, directory, count)
@@ -21,4 +22,4 @@ for d in subdirs:
     for sub in os.scandir(d):
         if sub.is_dir():
             shutil.rmtree(sub)
-    count += 1
+        

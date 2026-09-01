@@ -1,1 +1,3 @@
 exiftool/
+__pycache__/
+*.pyc
