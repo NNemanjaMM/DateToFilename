@@ -10,11 +10,14 @@ DEFAULT_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".webp", ".heic", ".hei
 class Config:
     source_dir: Path
 
-    # Perceptual hash tolerance.
-    #   0     = identical
-    #   1-3   = very similar
-    #   4-5   = more tolerant
-    hash_distance: int = 0
+    # Pass 1 - perceptual hash tolerance (the cheap net that picks candidates).
+    #   0     = bit-identical hash only
+    #   1-3   = very similar / mildly re-compressed
+    #   4-6   = downscaled + re-compressed copies of the same photo
+    #   8-12  = loose; leans on the pixel check to drop false positives
+    # A downscaled copy drifts a few bits, so 0 filters it out before pass 2
+    # ever sees it. Keep this generous when pixel_check is on.
+    hash_distance: int = 1
 
     # Second-stage check. The perceptual hash only sees the coarse light/dark
     # layout of a frame, so burst shots (a turned head, an object that appears)

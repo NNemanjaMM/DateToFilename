@@ -23,7 +23,20 @@ from dupfinder.cli import run
 
 CONFIG = Config(
     source_dir=Path(r"D:\Users\family\Desktop\todo"),
-    hash_distance=0,        # 0 = identical, 1-3 = very similar, 4-5 = more tolerant
+    hash_distance=6,        # pass-1 net: how far the perceptual hash may drift.
+                            # A downscaled + re-compressed copy of the same photo
+                            # drifts ~2 bits for a mild shrink, 4-6 for an
+                            # aggressive one, so 0 misses them entirely. Keep
+                            # this loose - the pixel check rejects false hits.
+    pixel_check=True,        # pass 2: re-check each candidate group pixel-by-pixel
+                            # and split/drop images that are not really alike.
+                            # It can only remove matches, never add them.
+    pixel_similarity=0.90,  # SSIM >= this = same photo. 0.90 is fairly strict;
+                            # lower (0.85) to tolerate stronger re-compression,
+                            # raise (0.93) to reject near-miss burst frames.
+    pixel_size=128,         # pass 2 compares images as pixel_size x pixel_size.
+                            # Larger (192-256) is stricter and slower; smaller
+                            # (96) is faster and more forgiving of blur.
     embed_thumbnails=True,  # False = sidecar _duplicate_report_assets/ folder
 )
 
